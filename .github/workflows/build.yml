@@ -1,23 +1,38 @@
 
-name: Build NumWorks App
+name: Build NumWorks app
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Get source code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y git cmake ninja-build python3 python3-pip nodejs npm
+          sudo apt-get install -y gcc-arm-none-eabi make
 
-      - name: Build application
+      - name: Install nwlink
+        run: npm install -g nwlink@0.0.16
+
+      - name: Create temporary icon
         run: |
-          git clone --depth 1 https://github.com/numworks/epsilon.git
-          echo "SDK checkout complete"
+          mkdir -p output
+          python3 -c "open('icon.png','wb').write(bytes.fromhex('89504e470d0a1a0a0000000d49484452000000100000001008060000001ff3ff610000000d49444154789c6360606060000000050001a5a5a5a50000000049454e44ae426082'))"
+
+      - name: Compile app
+        run: make build
+
+      - name: Upload NWA
+        uses: actions/upload-artifact@v4
+        with:
+          name: square-survival
+          path: output/app.nwa
